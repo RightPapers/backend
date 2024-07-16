@@ -2,6 +2,30 @@ from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
+#main
+@app.route('/main', methods=['GET'])
+def main():
+    return jsonify({'message': 'main page'})
+
+#검색시작
+#언어모델 연결 필요
+@app.route('/main', methods=['POST'])
+def main_post():
+    data = request.get_json()
+    return jsonify({'message': 'main page', 'data': data})
+
+#help
+@app.route('/help', methods=['GET'])
+def help():
+    return jsonify({'message': 'help page'})
+
+#result
+#언어모델 결과 리턴
+@app.route('/result', methods=['GET'])
+def result():
+    return jsonify({'message': 'result page'})
+
+
 # URL API
 @app.route('/url/submit', methods=['POST'])
 def url_submit_post():
