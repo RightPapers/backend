@@ -1,140 +1,114 @@
 from flask import Flask, request, jsonify
+import numpy as np
+import tensorflow as tf
+import os
 
 app = Flask(__name__)
 
-#main
-@app.route('/main', methods=['GET'])
+# 환경에 따라 설정 적용
+env = os.environ.get('FLASK_ENV', 'development')
+if env == 'production':
+    app.config.from_object('config.ProductionConfig')
+elif env == 'testing':
+    app.config.from_object('config.TestingConfig')
+else:
+    app.config.from_object('config.DevelopmentConfig')
+
+#모델 불러오기
+model_base_path = app.config['MODEL_PATH']
+gpt_model_path = os.path.join(model_base_path, 'gpt')
+roberta_model_path = os.path.join(model_base_path, 'roberta')
+transformer_model_path = os.path.join(model_base_path, 'transformer')
+
+model = tf.keras.models.load_model(transformer_model_path)
+
+@app.route('/api/analyze/<youtube_id>', methods=['POST'])
+def analyze(youtube_id):
+    # youtube_id 유효성 검사
+    if not youtube_id:
+        return jsonify({"error": "Invalid YouTube ID."}), 400
+    
+    # 유튜브 ID로부터 정보 추출 (예시 데이터 사용)
+    youtube_info = {
+        "id": youtube_id,
+        "thumbnail": f"https://img.youtube.com/vi/{youtube_id}/0.jpg",
+        "title": "Example Video Title",
+        "channel_name": "Example Channel"
+    }
+    
+    # 분석 결과 (예시 데이터 사용)
+    analysis_result = {
+        "accuracy": 95.5,
+        "summary": "This is a summary of the video content."
+    }
+    
+    # 관련 기사 (예시 데이터 사용)
+    related_articles = [
+        {
+            "source": "Example News",
+            "upload_time": "2024-07-28T10:00:00Z",
+            "title": "Example Article Title",
+            "link": "https://www.examplenews.com/article/example"
+        }
+    ]
+    
+    response = {
+        "youtube_info": youtube_info,
+        "analysis_result": analysis_result,
+        "related_articles": related_articles
+    }
+    
+    return jsonify(response), 200
+
+@app.route('/api/feedback', methods=['POST'])
+def feedback():
+    data = request.json
+    was_helpful = data.get('was_helpful')
+    feedback = data.get('feedback', "")
+    
+    if was_helpful is None or (was_helpful is False and not feedback):
+        return jsonify({"error": "Invalid feedback data."}), 400
+    
+    # 피드백 저장 또는 처리 (예시로 단순 메시지 반환)
+    return jsonify({"message": "Feedback received. Thank you!"}), 200
+
+@app.route('/api/main', methods=['GET'])
 def main():
-    return jsonify({'message': 'main page'})
+    try:
+        # 메인 화면 데이터 생성 (예시 데이터 사용)
+        main_content = "Welcome to the main page!"
+        highlights = [
+            {"title": "Highlight 1", "description": "Description of highlight 1"},
+            {"title": "Highlight 2", "description": "Description of highlight 2"}
+        ]
+        
+        response = {
+            "main_content": main_content,
+            "highlights": highlights
+        }
+        
+        return jsonify(response), 200
+    except Exception as e:
+        return jsonify({"error": "Failed to load main content."}), 500
 
-#검색시작
-#언어모델 연결 필요
-@app.route('/main', methods=['POST'])
-def main_post():
-    data = request.get_json()
-    return jsonify({'message': 'main page', 'data': data})
-
-#help
-@app.route('/help', methods=['GET'])
+@app.route('/api/help', methods=['GET'])
 def help():
-    return jsonify({'message': 'help page'})
-
-#result
-#언어모델 결과 리턴
-@app.route('/result', methods=['GET'])
-def result():
-    return jsonify({'message': 'result page'})
-
-
-# URL API
-@app.route('/url/submit', methods=['POST'])
-def url_submit_post():
-    data = request.get_json()
-    # 여기에 영상 URL 입력 처리 로직을 추가합니다.
-    return jsonify({'message': '영상 URL 입력 성공', 'data': data})
-
-@app.route('/url/submit', methods=['GET'])
-def url_submit_get():
-    # 여기에 영상 URL 입력 확인 로직을 추가합니다.
-    sample_data = {'sample_url': 'http://example.com'}
-    return jsonify({'message': '영상 URL 입력 확인', 'data': sample_data})
-
-@app.route('/url/time', methods=['POST'])
-def url_time_post():
-    data = request.get_json()
-    # 여기에 영상 시간대 입력 처리 로직을 추가합니다.
-    return jsonify({'message': '영상 시간대 입력 성공', 'data': data})
-
-@app.route('/url/time', methods=['GET'])
-def url_time_get():
-    # 여기에 영상 시간대 입력 확인 로직을 추가합니다.
-    sample_data = {'sample_time': '00:00:00'}
-    return jsonify({'message': '영상 시간대 입력 확인', 'data': sample_data})
-
-# Analysis API
-@app.route('/analysis/mismatch', methods=['POST'])
-def analysis_mismatch_post():
-    data = request.get_json()
-    # 여기에 제목과 본문의 불일치 기사 처리 로직을 추가합니다.
-    return jsonify({'message': '불일치 기사 분석 성공', 'data': data})
-
-@app.route('/analysis/mismatch', methods=['GET'])
-def analysis_mismatch_get():
-    # 여기에 불일치 기사 확인 로직을 추가합니다.
-    sample_data = {'sample_title': '제목', 'sample_content': '본문'}
-    return jsonify({'message': '불일치 기사 확인', 'data': sample_data})
-
-@app.route('/analysis/domain_inconsistency', methods=['POST'])
-def analysis_domain_inconsistency_post():
-    data = request.get_json()
-    # 여기에 본문의 도메인 일관성 부족 처리 로직을 추가합니다.
-    return jsonify({'message': '도메인 일관성 분석 성공', 'data': data})
-
-@app.route('/analysis/domain_inconsistency', methods=['GET'])
-def analysis_domain_inconsistency_get():
-    # 여기에 도메인 일관성 확인 로직을 추가합니다.
-    sample_data = {'sample_domain': 'example.com'}
-    return jsonify({'message': '도메인 일관성 확인', 'data': sample_data})
-
-@app.route('/analysis/summary', methods=['POST'])
-def analysis_summary_post():
-    data = request.get_json()
-    # 여기에 영상 내용 요약 처리 로직을 추가합니다.
-    return jsonify({'message': '영상 요약 성공', 'data': data})
-
-@app.route('/analysis/summary', methods=['GET'])
-def analysis_summary_get():
-    # 여기에 영상 요약 확인 로직을 추가합니다.
-    sample_data = {'sample_summary': '요약 내용'}
-    return jsonify({'message': '영상 요약 확인', 'data': sample_data})
-
-@app.route('/analysis/summary/alert', methods=['POST'])
-def analysis_summary_alert_post():
-    data = request.get_json()
-    # 여기에 주의 메시지 출력 처리 로직을 추가합니다.
-    return jsonify({'message': '주의 메시지 출력 성공', 'data': data})
-
-@app.route('/analysis/summary/alert', methods=['GET'])
-def analysis_summary_alert_get():
-    # 여기에 주의 메시지 확인 로직을 추가합니다.
-    sample_data = {'sample_alert': '주의 메시지'}
-    return jsonify({'message': '주의 메시지 확인', 'data': sample_data})
-
-@app.route('/analysis/visualization/keywords', methods=['POST'])
-def analysis_visualization_keywords_post():
-    data = request.get_json()
-    # 여기에 키워드 시각화 처리 로직을 추가합니다.
-    return jsonify({'message': '키워드 시각화 성공', 'data': data})
-
-@app.route('/analysis/visualization/keywords', methods=['GET'])
-def analysis_visualization_keywords_get():
-    # 여기에 키워드 시각화 확인 로직을 추가합니다.
-    sample_data = {'sample_keywords': ['키워드1', '키워드2']}
-    return jsonify({'message': '키워드 시각화 확인', 'data': sample_data})
-
-@app.route('/analysis/visualization/topics', methods=['POST'])
-def analysis_visualization_topics_post():
-    data = request.get_json()
-    # 여기에 토픽 시각화 처리 로직을 추가합니다.
-    return jsonify({'message': '토픽 시각화 성공', 'data': data})
-
-@app.route('/analysis/visualization/topics', methods=['GET'])
-def analysis_visualization_topics_get():
-    # 여기에 토픽 시각화 확인 로직을 추가합니다.
-    sample_data = {'sample_topics': ['토픽1', '토픽2']}
-    return jsonify({'message': '토픽 시각화 확인', 'data': sample_data})
-
-@app.route('/analysis/news/search', methods=['POST'])
-def analysis_news_search_post():
-    data = request.get_json()
-    # 여기에 유사한 신문 검색 결과 처리 로직을 추가합니다.
-    return jsonify({'message': '유사한 신문 검색 성공', 'data': data})
-
-@app.route('/analysis/news/search', methods=['GET'])
-def analysis_news_search_get():
-    # 여기에 유사한 신문 검색 결과 확인 로직을 추가합니다.
-    sample_data = {'sample_news': ['신문1', '신문2']}
-    return jsonify({'message': '유사한 신문 검색 확인', 'data': sample_data})
+    try:
+        # 도움말 화면 데이터 생성 (예시 데이터 사용)
+        help_content = "This is the help page content."
+        faq = [
+            {"question": "How to use this service?", "answer": "You can use this service by doing X, Y, and Z."},
+            {"question": "Who can I contact for support?", "answer": "You can contact support at support@example.com."}
+        ]
+        
+        response = {
+            "help_content": help_content,
+            "faq": faq
+        }
+        
+        return jsonify(response), 200
+    except Exception as e:
+        return jsonify({"error": "Failed to load help content."}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
