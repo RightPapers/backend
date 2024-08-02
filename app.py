@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 import numpy as np
-import tensorflow as tf
 import os
+from inference.py import *
 
 app = Flask(__name__)
 
@@ -22,13 +22,12 @@ transformer_model_path = os.path.join(model_base_path, 'transformer')
 
 model = tf.keras.models.load_model(transformer_model_path)
 
-@app.route('/api/analyze/<youtube_id>', methods=['POST'])
-def analyze(youtube_id):
-    # youtube_id 유효성 검사
-    if not youtube_id:
-        return jsonify({"error": "Invalid YouTube ID."}), 400
+# 모델에서 사용할 함수 정의 (예시)
+def analyze_video(youtube_id):
+    # 여기서 youtube_id를 사용해 모델을 통해 데이터를 처리
+    # 아래는 예시로, 실제 모델에 맞게 코드를 수정하세요.
     
-    # 유튜브 ID로부터 정보 추출 (예시 데이터 사용)
+    # 예시 결과 데이터
     youtube_info = {
         "id": youtube_id,
         "thumbnail": f"https://img.youtube.com/vi/{youtube_id}/0.jpg",
@@ -36,7 +35,7 @@ def analyze(youtube_id):
         "channel_name": "Example Channel"
     }
     
-    # 분석 결과 (예시 데이터 사용)
+    # 모델을 통해 분석한 결과 (예시 데이터 사용)
     analysis_result = {
         "accuracy": 95.5,
         "summary": "This is a summary of the video content."
@@ -52,13 +51,26 @@ def analyze(youtube_id):
         }
     ]
     
-    response = {
+    return {
         "youtube_info": youtube_info,
         "analysis_result": analysis_result,
         "related_articles": related_articles
     }
+
+@app.route('/api/analyze/<youtube_id>', methods=['POST'])
+def analyze(youtube_id):
+    # youtube_id 유효성 검사
+    if not youtube_id:
+        return jsonify({"error": "Invalid YouTube ID."}), 400
     
-    return jsonify(response), 200
+    try:
+        # 모델을 통해 유튜브 ID 분석
+        analysis_data = analyze_video(youtube_id)
+        
+        # 분석 결과 반환
+        return jsonify(analysis_data), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/api/feedback', methods=['POST'])
 def feedback():
