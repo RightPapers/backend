@@ -1,7 +1,14 @@
 from flask import Flask, request, jsonify
-import numpy as np
 import os
-from inference.py import *
+import sys
+
+# 현재 프로젝트 디렉토리를 sys.path에 추가
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+#필요한 모듈 가져오기
+from AI.common.utils import *
+from AI.common.inference import model_inference  
+from AI.models.gpt import VS_GPT
 
 app = Flask(__name__)
 
@@ -14,59 +21,69 @@ elif env == 'testing':
 else:
     app.config.from_object('config.DevelopmentConfig')
 
-#모델 불러오기
+#모델 경로 설정
 model_base_path = app.config['MODEL_PATH']
-gpt_model_path = os.path.join(model_base_path, 'gpt')
-roberta_model_path = os.path.join(model_base_path, 'roberta')
-transformer_model_path = os.path.join(model_base_path, 'transformer')
+roberta_model_path = os.path.join(model_base_path, 'reberta_ACC_0.9265.pth')
+transformer_model_path = os.path.join(model_base_path, 'transformer_ACC_0.9231.pth')
 
-model = tf.keras.models.load_model(transformer_model_path)
 
-# 모델에서 사용할 함수 정의 (예시)
-def analyze_video(youtube_id):
-    # 여기서 youtube_id를 사용해 모델을 통해 데이터를 처리
-    # 아래는 예시로, 실제 모델에 맞게 코드를 수정하세요.
-    
-    # 예시 결과 데이터
-    youtube_info = {
-        "id": youtube_id,
-        "thumbnail": f"https://img.youtube.com/vi/{youtube_id}/0.jpg",
-        "title": "Example Video Title",
-        "channel_name": "Example Channel"
-    }
-    
-    # 모델을 통해 분석한 결과 (예시 데이터 사용)
-    analysis_result = {
-        "accuracy": 95.5,
-        "summary": "This is a summary of the video content."
-    }
-    
-    # 관련 기사 (예시 데이터 사용)
-    related_articles = [
-        {
-            "source": "Example News",
-            "upload_time": "2024-07-28T10:00:00Z",
-            "title": "Example Article Title",
-            "link": "https://www.examplenews.com/article/example"
+# JSON 파일 저장 경로 설정
+json_save_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'saved_data')
+
+# 디렉토리가 존재하지 않으면 생성
+if not os.path.exists(json_save_path):
+    os.makedirs(json_save_path)
+
+def analyze_video(url):
+    # Use YouTubeCaptionCrawler to get video details and captions
+    crawler = YouTubeCaptionCrawler(url)
+    video_id = crawler.get_video_id(url)
+    video_details = crawler.get_metadata(video_id)
+
+    if video_details and isinstance(video_details, dict):
+        video_details["captions"] = crawler.get_caption()
+
+        # JSON 파일 저장
+        json_file_path = os.path.join(json_save_path, f'{video_id}.json')
+        crawler.save_to_json(json_file_path)
+
+        # Use model_inference to get the probability
+        probability = model_inference(url)
+        add_probability_to_json(json_file_path, probability)
+
+        # Use the GPT model to generate the summary
+        gpt = VS_GPT(file_path=json_file_path)
+        summary = gpt.generate_summary()
+
+        analysis_result = {
+            "fake_probability": probability,
+            "summary": summary
         }
-    ]
-    
-    return {
-        "youtube_info": youtube_info,
-        "analysis_result": analysis_result,
-        "related_articles": related_articles
-    }
-
-@app.route('/api/analyze/<youtube_id>', methods=['POST'])
-def analyze(youtube_id):
-    # youtube_id 유효성 검사
-    if not youtube_id:
-        return jsonify({"error": "Invalid YouTube ID."}), 400
-    
-    try:
-        # 모델을 통해 유튜브 ID 분석
-        analysis_data = analyze_video(youtube_id)
         
+        return {
+            "youtube_info": video_details,
+            "analysis_result": analysis_result,
+            "json_file_path": json_file_path,  # JSON 파일 경로 추가
+            "related_articles": []  # Placeholder for future implementation
+        }
+    else:
+        raise ValueError("Failed to retrieve video details")
+
+@app.route('/api/analyze', methods=['POST'])
+def analyze():
+    if request.content_type != 'application/json':
+        return jsonify({"error": "Content-Type must be application/json"}), 400
+
+    data = request.json
+    url = data.get('url')
+
+    if not url:
+        return jsonify({"error": "Invalid URL."}), 400
+
+    try:
+        # 모델을 통해 유튜브 URL 분석
+        analysis_data = analyze_video(url)
+
         # 분석 결과 반환
         return jsonify(analysis_data), 200
     except Exception as e:

@@ -1,7 +1,7 @@
 # coding : utf-8
 import json
 from openai import OpenAI
-from common.keys import my_keys
+from AI.common.keys import my_keys
 
 # OpenAI GPT for Video Summarization
 class VS_GPT:
@@ -15,11 +15,13 @@ class VS_GPT:
         with open(self.file_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
         
-        prompt = ""
-        for i, line in enumerate(data):
-            sentence_info = f'{i+1}번째 문장의 중요도는 {line["importance"]}이며, 내용은 "{line["sentence"]}"입니다.\n'
-            prompt += sentence_info
+        # 자막 내용 추출
+        captions = data.get("captions", "")
         
+        # 프롬프트 생성
+        prompt = f'이 비디오의 제목은 "{data["video_title"]}"이며, 다음은 비디오의 자막 내용입니다:\n{captions}\n' \
+                 f'위의 자막을 바탕으로 비디오 요약을 작성해주세요.'
+
         return prompt
     
     def generate_summary(self):

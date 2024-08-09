@@ -1,6 +1,6 @@
 # coding: utf-8
 import torch.nn as nn
-from common.layers import TransformerEncoder, AttentionMechanism
+from AI.common.layers import TransformerEncoder, AttentionMechanism
     
 # Transformer Encoder Model
 class BD_Transformer(nn.Module):

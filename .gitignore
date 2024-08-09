@@ -11,6 +11,11 @@ db.sqlite3
 db.sqlite3-journal
 media
 
+###local file
+AI/models/roberta_ACC_0.9265.pth
+AI/models/transformer_ACC_0.9231.pth
+saved_data/
+
 ### migration
 *_initial.py
 
@@ -174,6 +179,10 @@ cython_debug/
 #  be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
 #  and can be added to the global gitignore or merged into this file.  For a more nuclear
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
-#.idea/
+.idea/
 
 # End of https://www.toptal.com/developers/gitignore/api/django
+
+./AI/models/roberta_ACC_0.9265.pth
+./AI/models/transformer_ACC_0.9231.pth
+./saved_data/
