@@ -107,22 +107,7 @@ def main():
 
 @app.route('/api/help', methods=['GET'])
 def help():
-    try:
-        # 도움말 화면 데이터 생성 (예시 데이터 사용)
-        help_content = "This is the help page content."
-        faq = [
-            {"question": "How to use this service?", "answer": "You can use this service by doing X, Y, and Z."},
-            {"question": "Who can I contact for support?", "answer": "You can contact support at support@example.com."}
-        ]
-        
-        response = {
-            "help_content": help_content,
-            "faq": faq
-        }
-        
-        return jsonify(response), 200
-    except Exception as e:
-        return jsonify({"error": "Failed to load help content."}), 500
+    return jsonify({"message": "This is the help page"}), 200
 
 if __name__ == '__main__':
     app.run(debug=True)
