@@ -103,22 +103,7 @@ def feedback():
 
 @app.route('/api/main', methods=['GET'])
 def main():
-    try:
-        # 메인 화면 데이터 생성 (예시 데이터 사용)
-        main_content = "Welcome to the main page!"
-        highlights = [
-            {"title": "Highlight 1", "description": "Description of highlight 1"},
-            {"title": "Highlight 2", "description": "Description of highlight 2"}
-        ]
-        
-        response = {
-            "main_content": main_content,
-            "highlights": highlights
-        }
-        
-        return jsonify(response), 200
-    except Exception as e:
-        return jsonify({"error": "Failed to load main content."}), 500
+    return jsonify({"message": "This is the main page"}), 200
 
 @app.route('/api/help', methods=['GET'])
 def help():

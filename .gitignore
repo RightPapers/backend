@@ -186,3 +186,5 @@ cython_debug/
 ./AI/models/roberta_ACC_0.9265.pth
 ./AI/models/transformer_ACC_0.9231.pth
 ./saved_data/
+.DS_Store
+AI/.DS_Store
