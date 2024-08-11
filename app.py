@@ -99,7 +99,7 @@ def feedback():
         return jsonify({"error": "Invalid feedback data."}), 400
     
     # 피드백 저장 또는 처리 (예시로 단순 메시지 반환)
-    return jsonify({"message": "Feedback received. Thank you!"}), 200
+    return jsonify({"message": "소중한 피드백 감사합니다!"}), 200
 
 @app.route('/api/main', methods=['GET'])
 def main():

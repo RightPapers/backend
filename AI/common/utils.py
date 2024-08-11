@@ -187,6 +187,7 @@ class YouTubeCaptionCrawler:
             details = {
                 'video_title': video_title,
                 'upload_date': upload_date,
+                'video_id': video_id,
                 'channel_id': channel_id,
                 'channel_title': channel_title,
                 'like_count': like_count,
