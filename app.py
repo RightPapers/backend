@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timezone, timedelta
 import os
-import sys
+import sys 
 from dotenv import load_dotenv
 import pymysql
 from sqlalchemy import create_engine
@@ -35,6 +35,8 @@ model_base_path = app.config['MODEL_PATH']
 roberta_model_path = os.path.join(model_base_path, 'reberta_ACC_0.9265.pth')
 transformer_model_path = os.path.join(model_base_path, 'transformer_ACC_0.9231.pth')
 
+#데이터 베이스 설정
+'''
 DATABASE_URI = os.getenv('DATABASE_URI')
 if not DATABASE_URI:
     raise ValueError("DATABASE_URI 환경 변수가 설정되지 않았습니다.")
@@ -51,6 +53,7 @@ except Exception as e:
 
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URI')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+'''
 
 # JSON 파일 저장 경로 설정
 json_save_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'saved_data')
@@ -58,7 +61,7 @@ json_save_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'saved
 # 디렉토리가 존재하지 않으면 생성
 if not os.path.exists(json_save_path):
     os.makedirs(json_save_path)
-
+'''
 db = SQLAlchemy(app)
 class Feedback(db.Model):
     __tablename__ = 'FEEDBACK'
@@ -70,7 +73,7 @@ class Feedback(db.Model):
 
     def __repr__(self):
         return f'<Feedback {self.feedback_id}>'
-
+'''
 def analyze_video(url):
     # Use YouTubeCaptionCrawler to get video details and captions
     crawler = YouTubeCaptionCrawler(url)
@@ -89,7 +92,7 @@ def analyze_video(url):
         add_probability_to_json(json_file_path, probability)
 
         # Use the GPT model to generate the summary
-        gpt = VS_GPT(file_path=json_file_path)
+        gpt = VS_GPT(video_details["captions"])
         summary = gpt.generate_summary()
 
         analysis_result = {

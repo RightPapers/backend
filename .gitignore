@@ -15,6 +15,7 @@ media
 AI/models/roberta_ACC_0.9265.pth
 AI/models/transformer_ACC_0.9231.pth
 saved_data/
+config.py
 
 ### migration
 *_initial.py
