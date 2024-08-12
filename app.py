@@ -1,6 +1,15 @@
 from flask import Flask, request, jsonify
+from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime
 import os
 import sys
+from dotenv import load_dotenv
+import pymysql
+from sqlalchemy import create_engine
+
+pymysql.install_as_MySQLdb()
+
+load_dotenv()
 
 # 현재 프로젝트 디렉토리를 sys.path에 추가
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -26,6 +35,22 @@ model_base_path = app.config['MODEL_PATH']
 roberta_model_path = os.path.join(model_base_path, 'reberta_ACC_0.9265.pth')
 transformer_model_path = os.path.join(model_base_path, 'transformer_ACC_0.9231.pth')
 
+DATABASE_URI = os.getenv('DATABASE_URI')
+if not DATABASE_URI:
+    raise ValueError("DATABASE_URI 환경 변수가 설정되지 않았습니다.")
+
+engine = create_engine(DATABASE_URI)
+
+try:
+    with engine.connect() as connection:
+        result = connection.execute("SELECT DATABASE();")
+        print("Connected to:", result.fetchone())
+except Exception as e:
+    print("Error connecting to the database:", e)
+
+
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URI')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # JSON 파일 저장 경로 설정
 json_save_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'saved_data')
@@ -33,6 +58,18 @@ json_save_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'saved
 # 디렉토리가 존재하지 않으면 생성
 if not os.path.exists(json_save_path):
     os.makedirs(json_save_path)
+
+db = SQLAlchemy(app)
+class Feedback(db.Model):
+    __tablename__ = 'FEEDBACK'
+
+    feedback_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    feedback_text = db.Column(db.String(600), nullable=False)
+    video_id = db.Column(db.String(255), nullable=False)
+    submitted_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f'<Feedback {self.feedback_id}>'
 
 def analyze_video(url):
     # Use YouTubeCaptionCrawler to get video details and captions
@@ -92,52 +129,18 @@ def analyze():
 @app.route('/api/feedback', methods=['POST'])
 def feedback():
     data = request.json
-    was_helpful = data.get('was_helpful')
-    feedback = data.get('feedback', "")
-    
-    if was_helpful is None or (was_helpful is False and not feedback):
-        return jsonify({"error": "Invalid feedback data."}), 400
-    
-    # 피드백 저장 또는 처리 (예시로 단순 메시지 반환)
-    return jsonify({"message": "소중한 피드백 감사합니다!"}), 200
 
-@app.route('/api/main', methods=['GET'])
-def main():
-    try:
-        # 메인 화면 데이터 생성 (예시 데이터 사용)
-        main_content = "Welcome to the main page!"
-        highlights = [
-            {"title": "Highlight 1", "description": "Description of highlight 1"},
-            {"title": "Highlight 2", "description": "Description of highlight 2"}
-        ]
-        
-        response = {
-            "main_content": main_content,
-            "highlights": highlights
-        }
-        
-        return jsonify(response), 200
-    except Exception as e:
-        return jsonify({"error": "Failed to load main content."}), 500
+    feedback_text = data.get('feedback_text', "")
+    video_id = data.get('video_id')
 
-@app.route('/api/help', methods=['GET'])
-def help():
-    try:
-        # 도움말 화면 데이터 생성 (예시 데이터 사용)
-        help_content = "This is the help page content."
-        faq = [
-            {"question": "How to use this service?", "answer": "You can use this service by doing X, Y, and Z."},
-            {"question": "Who can I contact for support?", "answer": "You can contact support at support@example.com."}
-        ]
-        
-        response = {
-            "help_content": help_content,
-            "faq": faq
-        }
-        
-        return jsonify(response), 200
-    except Exception as e:
-        return jsonify({"error": "Failed to load help content."}), 500
+    if not video_id:
+        return jsonify({"error": "Invalid feedback data. 'video_id' is required."}), 400
+
+    new_feedback = Feedback(feedback_text=feedback_text, video_id=video_id)
+    db.session.add(new_feedback)
+    db.session.commit()
+
+    return jsonify({"message": "Feedback received. Thank you!"}), 200
 
 if __name__ == '__main__':
     app.run(debug=True)
