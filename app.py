@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 import os
 import sys
 from dotenv import load_dotenv
@@ -66,7 +66,7 @@ class Feedback(db.Model):
     feedback_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     feedback_text = db.Column(db.String(600), nullable=False)
     video_id = db.Column(db.String(255), nullable=False)
-    submitted_at = db.Column(db.DateTime, default=datetime.utcnow)
+    submitted_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone(timedelta(hours=9))))
 
     def __repr__(self):
         return f'<Feedback {self.feedback_id}>'
