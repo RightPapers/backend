@@ -129,6 +129,7 @@ def analyze():
 @app.route('/api/feedback', methods=['POST'])
 def feedback():
     data = request.json
+
     feedback_text = data.get('feedback_text', "")
     video_id = data.get('video_id')
 
