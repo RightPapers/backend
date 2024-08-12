@@ -1,37 +1,39 @@
 # coding : utf-8
 import json
+
 from openai import OpenAI
-from AI.common.keys import my_keys
+from common.keys import my_keys
+from common.utils import YouTubeCaptionCrawler
+#from textrank.keysentences import textrank_keysentences
 
 # OpenAI GPT for Video Summarization
 class VS_GPT:
-    def __init__(self, file_path, model='gpt-3.5-turbo'):
+    def __init__(self, url, model='gpt-3.5-turbo'):
         self.api_key = my_keys('openai')
         self.client = OpenAI(api_key=self.api_key)
-        self.file_path = file_path  # json file_path
+        self.url = url  # video url
         self.model = model  # default: gpt-3.5-turbo / possible: gpt-4-turbo, gpt-4o-mini
     
-    def _create_prompt(self):
-        with open(self.file_path, 'r', encoding='utf-8') as f:
-            data = json.load(f)
+    #def _create_prompt(self):
+        # # TextRank로 중요 문장 추출
+        # summary_data = textrank_keysentences(self.url)
         
-        # 자막 내용 추출
-        captions = data.get("captions", "")
+        # prompt = ""
+        # for i, line in enumerate(summary_data):
+        #     sentence_info = f'{i+1}번째 문장의 중요도는 {line["importance"]}이며, 내용은 "{line["sentence"]}"입니다.\n'
+        #     prompt += sentence_info
         
-        # 프롬프트 생성
-        prompt = f'이 비디오의 제목은 "{data["video_title"]}"이며, 다음은 비디오의 자막 내용입니다:\n{captions}\n' \
-                 f'위의 자막을 바탕으로 비디오 요약을 작성해주세요.'
-
-        return prompt
+        #return prompt
     
     def generate_summary(self):
-        prompt = self._create_prompt()
+        #prompt = self._create_prompt()
+        caption = YouTubeCaptionCrawler(self.url).get_caption()
         completion = self.client.chat.completions.create(
             model=self.model,
             messages=[
-                {"role": "system", "content": "너는 주어진 문장의 중요도와 내용을 바탕으로 비디오를 요약해주는 기능을 가지고 있어."},
-                {"role": "user", "content": "다음 정보를 바탕으로 짜임새 있는 요약문을 작성해줘."},
-                {"role": "user", "content": f"{prompt}"}
+                {"role": "system", "content": "너는 긴 유튜브 영상을 5개의 문장으로 요약하는 모델이야."},
+                {"role": "user", "content": "다음 내용을 요약문으로 작성해줘."},
+                {"role": "user", "content": f"{caption}"}
             ]
         )
         
