@@ -95,6 +95,9 @@ def analyze_video(url):
         gpt = VS_GPT(video_details["captions"])
         summary = gpt.generate_summary()
 
+        #json에서 캡션(자막)은 제거
+        del video_details["captions"]
+        
         analysis_result = {
             "fake_probability": probability,
             "summary": summary
@@ -103,7 +106,6 @@ def analyze_video(url):
         return {
             "youtube_info": video_details,
             "analysis_result": analysis_result,
-            "json_file_path": json_file_path,  # JSON 파일 경로 추가
             "related_articles": []  # Placeholder for future implementation
         }
     else:

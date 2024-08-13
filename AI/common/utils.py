@@ -177,15 +177,16 @@ class YouTubeCaptionCrawler:
             video_stats = video_response['items'][0]['statistics']
             
             video_title = video_details['title']
-            upload_date = video_details['publishedAt']
-            channel_id = video_details['channelId']
+            # upload_date = video_details['publishedAt']
+            # channel_id = video_details['channelId']
+            # like_count = video_stats.get('likeCount', '0')
             channel_title = video_details['channelTitle']
-            like_count = video_stats.get('likeCount', '0')
             hashtags = video_details.get('tags', [])
             thumbnails = video_details['thumbnails']['high']['url']
             
             details = {
                 'video_title': video_title,
+                'channel_title': channel_title,
                 'video_id': video_id,
                 'hashtags': hashtags,
                 'thumbnails': thumbnails
