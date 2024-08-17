@@ -1,4 +1,7 @@
 # coding: utf-8
+import os
+import sys
+import urllib.request
 import torch
 import random
 import json
@@ -14,7 +17,7 @@ from googleapiclient.errors import HttpError
 from collections import Counter
 from scipy.sparse import csr_matrix
 from bareunpy import Tagger
-from AI.common.keys import my_keys
+from common.keys import my_keys
 
 def fixSEED(seed, deterministic=True):
     '''
@@ -177,17 +180,19 @@ class YouTubeCaptionCrawler:
             video_stats = video_response['items'][0]['statistics']
             
             video_title = video_details['title']
-            # upload_date = video_details['publishedAt']
-            # channel_id = video_details['channelId']
-            # like_count = video_stats.get('likeCount', '0')
+            upload_date = video_details['publishedAt']
+            channel_id = video_details['channelId']
             channel_title = video_details['channelTitle']
+            like_count = video_stats.get('likeCount', '0')
             hashtags = video_details.get('tags', [])
             thumbnails = video_details['thumbnails']['high']['url']
             
             details = {
                 'video_title': video_title,
+                'upload_date': upload_date,
+                'channel_id': channel_id,
                 'channel_title': channel_title,
-                'video_id': video_id,
+                'like_count': like_count,
                 'hashtags': hashtags,
                 'thumbnails': thumbnails
             }
@@ -253,8 +258,6 @@ class YouTubeCaptionCrawler:
             print(f'Successfully saved JSON to {file_path}')
         else:
             print('JSON file not saved')
-
-
             
 class YouTubeDataFetcher:
     '''
@@ -443,18 +446,28 @@ def baruen_tokenizer(s):
     
     return [token for token, tag in baruen_tagger.pos(s) if tag in pos_list]
 
-def add_probability_to_json(json_file_path, probability):
-    with open(json_file_path, 'r', encoding='utf-8') as f:
-        data = json.load(f)
-
-    # Add the probability to the JSON data
-    data["probability"] = probability
-
-    # Save the updated JSON data back to the file
-    with open(json_file_path, 'w', encoding='utf-8') as f:
-        json.dump(data, f, ensure_ascii=False, indent=4)
+def baruen_noun_tokenizer(s):
+    '''
+    바른형태소 분석기를 활용한 명사 추출 토크나이저
+    
+    Args:
+        s: 입력 문장
         
-        
+    Note:
+        바른 형태소 분석기는 별도의 설치가 필요하며, API 키가 필요함
+        다운로드 : https://bareun.ai/download
+        Windows/MAC에서 바른형태소 분석기 활성화 : https://bareun.ai/docs
+        - Window는 설치 후 환경변수 설정 및 윈도우 서비스 활성화 필요
+        - MAC은 설치 후 터미널에서 다음의 명령어 실행, sudo launchctl unload /Library/LaunchAgents/bareun.plist
+    '''
+    
+    pos_list = ['NNG', 'NNP', 'NP']
+    API_KEY = my_keys('bareun')
+    baruen_tagger = Tagger(API_KEY, 'localhost')
+    
+    return [token for token, tag in baruen_tagger.pos(s) if tag in pos_list]
+    
+
 def get_related_news(query, display='3', start='1', sort='sim'):
     '''
     네이버 뉴스 API를 활용하여 관련 뉴스를 가져오는 함수
