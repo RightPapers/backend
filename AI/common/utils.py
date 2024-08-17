@@ -453,3 +453,90 @@ def add_probability_to_json(json_file_path, probability):
     # Save the updated JSON data back to the file
     with open(json_file_path, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
+        
+        
+def get_related_news(query, display='3', start='1', sort='sim'):
+    '''
+    네이버 뉴스 API를 활용하여 관련 뉴스를 가져오는 함수
+    (참고: https://developers.naver.com/docs/serviceapi/search/news/news.md#%EB%89%B4%EC%8A%A4)
+    
+    Args:
+        query: 검색할 키워드
+        display: 가져올 뉴스 개수
+        start: 시작 인덱스
+        sort: 정렬 기준 (sim: 유사도순, date: 날짜순)
+    '''
+    
+    # 네이버 API 키
+    client_id = my_keys('naver')['client_id']
+    client_secret = my_keys('naver')['client_sever']
+    
+    # 검색어 인코딩
+    encText = urllib.parse.quote(query)
+    
+    # API 파라미터
+    url = "https://openapi.naver.com/v1/search/news?query=" + encText + "&display=" + display + "&start=" + start + "&sort=" + sort
+    
+    # API 요청
+    request = urllib.request.Request(url)
+    request.add_header("X-Naver-Client-Id",client_id)
+    request.add_header("X-Naver-Client-Secret",client_secret)
+    
+    # 응답 받기
+    response = urllib.request.urlopen(request)
+    rescode = response.getcode()
+    
+    if(rescode==200):
+        response_body = response.read().decode('utf-8')
+        response_body = response_body.replace('\\/', '/')
+        data = json.loads(response_body)
+        
+        news = data['items']
+        
+        first_dict = {'title':news[0]['title'],
+                      'link':news[0]['originallink'],
+                      'pubDate':news[0]['pubDate'],
+                      'description':news[0]['description']}
+        
+        second_dict = {'title':news[1]['title'],
+                       'link':news[1]['originallink'],
+                       'pubDate':news[1]['pubDate'],
+                       'description':news[1]['description']}
+        
+        third_dict = {'title':news[2]['title'],
+                      'link':news[2]['originallink'],
+                      'pubDate':news[2]['pubDate'],
+                      'description':news[2]['description']}
+        
+        return first_dict, second_dict, third_dict
+    
+
+def related_articles(gpt_summary):
+    '''
+    GPT 요약문을 바탕으로 관련 기사를 가져오는 함수
+    
+    Args:
+        gpt_summary(str): GPT(VS_GPT)가 생성한 요약문 
+    '''
+    
+    # 요약문 문장 단위 분리 후 첫 문장만 가져오기
+    first_line = gpt_summary.split('. ')[0]
+    
+    # 바른형태소 분석기를 활용한 명사 추출
+    query = baruen_noun_tokenizer(first_line)
+    
+    # 추출한 명사를 바탕으로 쿼리 생성
+    query = ' '.join(query[:5])
+    
+    # 생성한 쿼리로 관련 뉴스 가져오기
+    first_news, second_news, third_news = get_related_news(query)
+    
+    # 사전 형태로 저장
+    news = {
+        'query': query,
+        'first_news': first_news,
+        'second_news': second_news,
+        'third_news': third_news
+    }
+    
+    return news
