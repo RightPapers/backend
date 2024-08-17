@@ -89,14 +89,16 @@ def analyze_video(url):
 
         # Use model_inference to get the probability
         probability = model_inference(url)
-        add_probability_to_json(json_file_path, probability)
 
         # Use the GPT model to generate the summary
         gpt = VS_GPT(video_details["captions"])
         summary = gpt.generate_summary()
 
+        related_news = related_articles(summary)
+
         #json에서 캡션(자막)은 제거
         del video_details["captions"]
+        del video_details["hashtags"]
         
         analysis_result = {
             "fake_probability": probability,
@@ -106,7 +108,7 @@ def analyze_video(url):
         return {
             "youtube_info": video_details,
             "analysis_result": analysis_result,
-            "related_articles": []  # Placeholder for future implementation
+            "related_articles": related_news
         }
     else:
         raise ValueError("Failed to retrieve video details")

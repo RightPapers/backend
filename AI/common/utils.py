@@ -17,7 +17,7 @@ from googleapiclient.errors import HttpError
 from collections import Counter
 from scipy.sparse import csr_matrix
 from bareunpy import Tagger
-from common.keys import my_keys
+from AI.common.keys import my_keys
 
 def fixSEED(seed, deterministic=True):
     '''
@@ -464,6 +464,7 @@ def baruen_noun_tokenizer(s):
     pos_list = ['NNG', 'NNP', 'NP']
     API_KEY = my_keys('bareun')
     baruen_tagger = Tagger(API_KEY, 'localhost')
+    print("바른 완료")
     
     return [token for token, tag in baruen_tagger.pos(s) if tag in pos_list]
     
@@ -546,7 +547,6 @@ def related_articles(gpt_summary):
     
     # 사전 형태로 저장
     news = {
-        'query': query,
         'first_news': first_news,
         'second_news': second_news,
         'third_news': third_news
