@@ -37,22 +37,22 @@ transformer_model_path = os.path.join(model_base_path, 'transformer_ACC_0.9231.p
 
 #데이터 베이스 설정
 
-DATABASE_URI = os.getenv('DATABASE_URI')
-if not DATABASE_URI:
-    raise ValueError("DATABASE_URI 환경 변수가 설정되지 않았습니다.")
+# DATABASE_URI = os.getenv('DATABASE_URI')
+# if not DATABASE_URI:
+#     raise ValueError("DATABASE_URI 환경 변수가 설정되지 않았습니다.")
 
-engine = create_engine(DATABASE_URI)
+# engine = create_engine(DATABASE_URI)
 
-try:
-    with engine.connect() as connection:
-        result = connection.execute("SELECT DATABASE();")
-        print("Connected to:", result.fetchone())
-except Exception as e:
-    print("Error connecting to the database:", e)
+# try:
+#     with engine.connect() as connection:
+#         result = connection.execute("SELECT DATABASE();")
+#         print("Connected to:", result.fetchone())
+# except Exception as e:
+#     print("Error connecting to the database:", e)
 
 
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URI')
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+# app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URI')
+# app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 
 # JSON 파일 저장 경로 설정
@@ -62,17 +62,17 @@ json_save_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'saved
 if not os.path.exists(json_save_path):
     os.makedirs(json_save_path)
 
-db = SQLAlchemy(app)
-class Feedback(db.Model):
-    __tablename__ = 'FEEDBACK'
+#db = SQLAlchemy(app)
+# class Feedback(db.Model):
+#     __tablename__ = 'FEEDBACK'
 
-    feedback_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    feedback_text = db.Column(db.String(600), nullable=False)
-    video_id = db.Column(db.String(255), nullable=False)
-    submitted_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone(timedelta(hours=9))))
+#     feedback_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+#     feedback_text = db.Column(db.String(600), nullable=False)
+#     video_id = db.Column(db.String(255), nullable=False)
+#     submitted_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone(timedelta(hours=9))))
 
-    def __repr__(self):
-        return f'<Feedback {self.feedback_id}>'
+#     def __repr__(self):
+#         return f'<Feedback {self.feedback_id}>'
 
 def analyze_video(url):
     # Use YouTubeCaptionCrawler to get video details and captions
@@ -82,6 +82,7 @@ def analyze_video(url):
 
     if video_details and isinstance(video_details, dict):
         video_details["captions"] = crawler.get_caption()
+        video_details["video_id"] = video_id
 
         # JSON 파일 저장
         json_file_path = os.path.join(json_save_path, f'{video_id}.json')
@@ -96,7 +97,7 @@ def analyze_video(url):
 
         related_news = related_articles(summary)
 
-        #json에서 캡션(자막)은 제거
+        #json에서 불필요한 것 제거
         del video_details["captions"]
         del video_details["hashtags"]
         
