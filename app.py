@@ -7,17 +7,15 @@ from dotenv import load_dotenv
 import pymysql
 from sqlalchemy import create_engine
 
-pymysql.install_as_MySQLdb()
+#필요한 모듈 가져오기
+from AI.common.utils import *
+from AI.common.inference import model_inference
+from AI.models.gpt import VS_GPT
 
 load_dotenv()
 
 # 현재 프로젝트 디렉토리를 sys.path에 추가
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-
-#필요한 모듈 가져오기
-from AI.common.utils import *
-from AI.common.inference import model_inference  
-from AI.models.gpt import VS_GPT
 
 app = Flask(__name__)
 
@@ -35,26 +33,6 @@ model_base_path = app.config['MODEL_PATH']
 roberta_model_path = os.path.join(model_base_path, 'reberta_ACC_0.9265.pth')
 transformer_model_path = os.path.join(model_base_path, 'transformer_ACC_0.9231.pth')
 
-#데이터 베이스 설정
-
-# DATABASE_URI = os.getenv('DATABASE_URI')
-# if not DATABASE_URI:
-#     raise ValueError("DATABASE_URI 환경 변수가 설정되지 않았습니다.")
-
-# engine = create_engine(DATABASE_URI)
-
-# try:
-#     with engine.connect() as connection:
-#         result = connection.execute("SELECT DATABASE();")
-#         print("Connected to:", result.fetchone())
-# except Exception as e:
-#     print("Error connecting to the database:", e)
-
-
-# app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URI')
-# app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-
 # JSON 파일 저장 경로 설정
 json_save_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'saved_data')
 
@@ -62,17 +40,25 @@ json_save_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'saved
 if not os.path.exists(json_save_path):
     os.makedirs(json_save_path)
 
-#db = SQLAlchemy(app)
-# class Feedback(db.Model):
-#     __tablename__ = 'FEEDBACK'
+# 피드백 데이터베이스 설정
+pymysql.install_as_MySQLdb()
+db = SQLAlchemy(app)
+DATABASE_URI = os.getenv('DATABASE_URI')
+engine = create_engine(DATABASE_URI)
 
-#     feedback_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-#     feedback_text = db.Column(db.String(600), nullable=False)
-#     video_id = db.Column(db.String(255), nullable=False)
-#     submitted_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone(timedelta(hours=9))))
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URI')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-#     def __repr__(self):
-#         return f'<Feedback {self.feedback_id}>'
+class Feedback(db.Model):
+    __tablename__ = 'FEEDBACK'
+
+    feedback_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    feedback_text = db.Column(db.String(600), nullable=False)
+    video_id = db.Column(db.String(255), nullable=False)
+    submitted_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone(timedelta(hours=9))))
+
+    def __repr__(self):
+        return f'<Feedback {self.feedback_id}>'
 
 def analyze_video(url):
     # Use YouTubeCaptionCrawler to get video details and captions

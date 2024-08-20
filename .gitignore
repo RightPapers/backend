@@ -185,9 +185,5 @@ cython_debug/
 
 # End of https://www.toptal.com/developers/gitignore/api/django
 
-./AI/models/roberta_ACC_0.9265.pth
-./AI/models/transformer_ACC_0.9231.pth
-./saved_data/
+# Ignore .DS_Store files
 .DS_Store
-AI/.DS_Store
-AI/common/keys.py
