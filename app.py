@@ -54,14 +54,6 @@ transformer_model_path = os.path.join(model_base_path, 'transformer_ACC_0.9231.p
 # app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URI')
 # app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-
-# JSON 파일 저장 경로 설정
-json_save_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'saved_data')
-
-# 디렉토리가 존재하지 않으면 생성
-if not os.path.exists(json_save_path):
-    os.makedirs(json_save_path)
-
 #db = SQLAlchemy(app)
 # class Feedback(db.Model):
 #     __tablename__ = 'FEEDBACK'
@@ -83,10 +75,6 @@ def analyze_video(url):
     if video_details and isinstance(video_details, dict):
         video_details["captions"] = crawler.get_caption()
         video_details["video_id"] = video_id
-
-        # JSON 파일 저장
-        json_file_path = os.path.join(json_save_path, f'{video_id}.json')
-        crawler.save_to_json(json_file_path)
 
         # Use model_inference to get the probability
         probability = model_inference(url)

@@ -245,19 +245,6 @@ class YouTubeCaptionCrawler:
             sentences.append(last_sentence)
 
         return sentences
-    
-    def save_to_json(self, file_path):
-        video_id = self.get_video_id(self.url)
-        details = self.get_metadata(video_id)
-        captions = self.get_caption()
-        if details:
-            details['captions'] = captions
-            details['ID'] = video_id
-            with open(file_path, 'w', encoding='utf-8') as f:
-                json.dump(details, f, ensure_ascii=False, indent=4)
-            print(f'Successfully saved JSON to {file_path}')
-        else:
-            print('JSON file not saved')
             
 class YouTubeDataFetcher:
     '''
