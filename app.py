@@ -6,6 +6,9 @@ import sys
 from dotenv import load_dotenv
 import pymysql
 from sqlalchemy import create_engine
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 #필요한 모듈 가져오기
 from AI.common.utils import *
@@ -27,6 +30,8 @@ elif env == 'testing':
     app.config.from_object('config.TestingConfig')
 else:
     app.config.from_object('config.DevelopmentConfig')
+
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 #모델 경로 설정
 model_base_path = app.config['MODEL_PATH']
