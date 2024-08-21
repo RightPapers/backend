@@ -96,6 +96,7 @@ def analyze_video(url):
         summary = gpt.generate_summary()
 
         related_news = related_articles(summary)
+        related_articles_list = related_news['articles']
 
         #json에서 불필요한 것 제거
         del video_details["captions"]
@@ -109,7 +110,7 @@ def analyze_video(url):
         return {
             "youtube_info": video_details,
             "analysis_result": analysis_result,
-            "related_articles": related_news
+            "related_articles": related_articles_list
         }
     else:
         raise ValueError("Failed to retrieve video details")

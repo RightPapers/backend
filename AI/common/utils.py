@@ -469,7 +469,7 @@ def baruen_noun_tokenizer(s):
     return [token for token, tag in baruen_tagger.pos(s) if tag in pos_list]
     
 
-def get_related_news(query, display='3', start='1', sort='sim'):
+def get_related_news(query, display='3', start='1', sort='date'):
     '''
     네이버 뉴스 API를 활용하여 관련 뉴스를 가져오는 함수
     (참고: https://developers.naver.com/docs/serviceapi/search/news/news.md#%EB%89%B4%EC%8A%A4)
@@ -507,22 +507,18 @@ def get_related_news(query, display='3', start='1', sort='sim'):
         
         news = data['items']
         
-        first_dict = {'title':news[0]['title'],
-                      'link':news[0]['originallink'],
-                      'pubDate':news[0]['pubDate'],
-                      'description':news[0]['description']}
+        # 각 뉴스를 딕셔너리로 저장하고 리스트로 반환
+        news_list = []
         
-        second_dict = {'title':news[1]['title'],
-                       'link':news[1]['originallink'],
-                       'pubDate':news[1]['pubDate'],
-                       'description':news[1]['description']}
+        for item in news:
+            news_dict = {
+                'title': item['title'],
+                'link': item['originallink'],
+                'description': item['description']
+            }
+            news_list.append(news_dict)
         
-        third_dict = {'title':news[2]['title'],
-                      'link':news[2]['originallink'],
-                      'pubDate':news[2]['pubDate'],
-                      'description':news[2]['description']}
-        
-        return first_dict, second_dict, third_dict
+        return news_list
     
 
 def related_articles(gpt_summary):
@@ -543,13 +539,12 @@ def related_articles(gpt_summary):
     query = ' '.join(query[:5])
     
     # 생성한 쿼리로 관련 뉴스 가져오기
-    first_news, second_news, third_news = get_related_news(query)
+    news_list = get_related_news(query)
     
-    # 사전 형태로 저장
-    news = {
-        'first_news': first_news,
-        'second_news': second_news,
-        'third_news': third_news
+    # 리스트 형태로 반환
+    return {
+        'query': query,
+        'articles': news_list
     }
     
     return news
