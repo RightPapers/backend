@@ -514,6 +514,7 @@ def get_related_news(query, display='3', start='1', sort='date'):
             news_dict = {
                 'title': item['title'],
                 'link': item['originallink'],
+                'pubDate': item['pubDate'],
                 'description': item['description']
             }
             news_list.append(news_dict)
