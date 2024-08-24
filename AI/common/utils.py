@@ -245,19 +245,6 @@ class YouTubeCaptionCrawler:
             sentences.append(last_sentence)
 
         return sentences
-    
-    def save_to_json(self, file_path):
-        video_id = self.get_video_id(self.url)
-        details = self.get_metadata(video_id)
-        captions = self.get_caption()
-        if details:
-            details['captions'] = captions
-            details['ID'] = video_id
-            with open(file_path, 'w', encoding='utf-8') as f:
-                json.dump(details, f, ensure_ascii=False, indent=4)
-            print(f'Successfully saved JSON to {file_path}')
-        else:
-            print('JSON file not saved')
             
 class YouTubeDataFetcher:
     '''
@@ -437,7 +424,7 @@ def baruen_tokenizer(s):
         다운로드 : https://bareun.ai/download
         Windows/MAC에서 바른형태소 분석기 활성화 : https://bareun.ai/docs
         - Window는 설치 후 환경변수 설정 및 윈도우 서비스 활성화 필요
-        - MAC은 설치 후 터미널에서 다음의 명령어 실행, sudo launchctl unload /Library/LaunchAgents/bareun.plist
+        - MAC은 부팅 후 실행 안되면 재실행 명령어 실헹, sudo launchctl bootstrap gui/$(id -u) /Library/LaunchAgents/bareun.plist
     '''
     
     pos_list = ['NNG', 'NNP', 'NP', 'VV', 'VA', 'MAG', 'MMA', 'MMD', 'MMN', 'XPN', 'XSN', 'XSV', 'XSA']
@@ -469,7 +456,7 @@ def baruen_noun_tokenizer(s):
     return [token for token, tag in baruen_tagger.pos(s) if tag in pos_list]
     
 
-def get_related_news(query, display='3', start='1', sort='sim'):
+def get_related_news(query, display='3', start='1', sort='date'):
     '''
     네이버 뉴스 API를 활용하여 관련 뉴스를 가져오는 함수
     (참고: https://developers.naver.com/docs/serviceapi/search/news/news.md#%EB%89%B4%EC%8A%A4)
@@ -506,23 +493,20 @@ def get_related_news(query, display='3', start='1', sort='sim'):
         data = json.loads(response_body)
         
         news = data['items']
+
+        # 각 뉴스를 딕셔너리로 저장하고 리스트로 반환
+        news_list = []
+
+        for item in news:
+            news_dict = {
+                'title': item['title'],
+                'link': item['originallink'],
+                'pubDate': item['pubDate'],
+                'description': item['description']
+            }
+            news_list.append(news_dict)
         
-        first_dict = {'title':news[0]['title'],
-                      'link':news[0]['originallink'],
-                      'pubDate':news[0]['pubDate'],
-                      'description':news[0]['description']}
-        
-        second_dict = {'title':news[1]['title'],
-                       'link':news[1]['originallink'],
-                       'pubDate':news[1]['pubDate'],
-                       'description':news[1]['description']}
-        
-        third_dict = {'title':news[2]['title'],
-                      'link':news[2]['originallink'],
-                      'pubDate':news[2]['pubDate'],
-                      'description':news[2]['description']}
-        
-        return first_dict, second_dict, third_dict
+        return news_list
     
 
 def related_articles(gpt_summary):
@@ -543,13 +527,10 @@ def related_articles(gpt_summary):
     query = ' '.join(query[:5])
     
     # 생성한 쿼리로 관련 뉴스 가져오기
-    first_news, second_news, third_news = get_related_news(query)
-    
-    # 사전 형태로 저장
-    news = {
-        'first_news': first_news,
-        'second_news': second_news,
-        'third_news': third_news
+    news_list = get_related_news(query)
+
+    # 리스트 형태로 반환
+    return {
+        'query': query,
+        'articles': news_list
     }
-    
-    return news

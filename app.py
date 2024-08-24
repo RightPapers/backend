@@ -38,13 +38,6 @@ model_base_path = app.config['MODEL_PATH']
 roberta_model_path = os.path.join(model_base_path, 'reberta_ACC_0.9265.pth')
 transformer_model_path = os.path.join(model_base_path, 'transformer_ACC_0.9231.pth')
 
-# JSON 파일 저장 경로 설정
-json_save_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'saved_data')
-
-# 디렉토리가 존재하지 않으면 생성
-if not os.path.exists(json_save_path):
-    os.makedirs(json_save_path)
-
 # 피드백 데이터베이스 설정
 pymysql.install_as_MySQLdb()
 db = SQLAlchemy(app)
@@ -75,10 +68,6 @@ def analyze_video(url):
         video_details["captions"] = crawler.get_caption()
         video_details["video_id"] = video_id
 
-        # JSON 파일 저장
-        json_file_path = os.path.join(json_save_path, f'{video_id}.json')
-        crawler.save_to_json(json_file_path)
-
         # Use model_inference to get the probability
         probability = model_inference(url)
 
@@ -87,6 +76,7 @@ def analyze_video(url):
         summary = gpt.generate_summary()
 
         related_news = related_articles(summary)
+        related_articles_list = related_news['articles']
 
         #json에서 불필요한 것 제거
         del video_details["captions"]
@@ -100,12 +90,12 @@ def analyze_video(url):
         return {
             "youtube_info": video_details,
             "analysis_result": analysis_result,
-            "related_articles": related_news
+            "related_articles": related_articles_list
         }
     else:
         raise ValueError("Failed to retrieve video details")
 
-@app.route('/api/analyze', methods=['POST'])
+@app.route('/analyze', methods=['POST'])
 def analyze():
     if request.content_type != 'application/json':
         return jsonify({"error": "Content-Type must be application/json"}), 400
@@ -125,7 +115,7 @@ def analyze():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route('/api/feedback', methods=['POST'])
+@app.route('/feedback', methods=['POST'])
 def feedback():
     data = request.json
 
@@ -140,6 +130,10 @@ def feedback():
     db.session.commit()
 
     return jsonify({"message": "Feedback received. Thank you!"}), 200
+
+@app.route('/', methods=['GET'])
+def index():
+    return "Hello, World!"
 
 if __name__ == '__main__':
     app.run(debug=False, host = '0.0.0.0', port = 5000)
