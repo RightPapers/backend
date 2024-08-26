@@ -17,6 +17,7 @@ from googleapiclient.errors import HttpError
 from collections import Counter
 from scipy.sparse import csr_matrix
 from bareunpy import Tagger
+from konlpy.tag import Okt
 from AI.common.keys import my_keys
 
 def fixSEED(seed, deterministic=True):
@@ -412,6 +413,23 @@ def vectorize(tokens, vocab_to_idx):
     x = csr_matrix((data, (rows, cols)), shape=(n_sents, n_terms))
     return x
 
+
+def okt_noun_tokenizer(s):
+    '''
+    Okt 형태소 분석기를 활용한 명사 추출 토크나이저
+
+    Args:
+        s: 입력 문장
+
+    Note:
+        KoNLPy 라이브러리의 Okt 형태소 분석기를 활용하여 명사를 추출함
+        - KoNLPy 설치 : pip install konlpy
+    '''
+
+    okt = Okt()
+    pos_list = ['Noun']  # Okt에서는 명사(NNG, NNP, NP)가 'Noun' 태그로 표시됨
+
+    return [token for token, tag in okt.pos(s) if tag in pos_list]
 def baruen_tokenizer(s):
     '''
     바른형태소 분석기를 활용한 토크나이저
@@ -522,6 +540,7 @@ def related_articles(gpt_summary):
     
     # 바른형태소 분석기를 활용한 명사 추출
     query = baruen_noun_tokenizer(first_line)
+    query = okt_noun_tokenizer(first_line)
     
     # 추출한 명사를 바탕으로 쿼리 생성
     query = ' '.join(query[:5])
