@@ -129,7 +129,7 @@ def feedback():
     db.session.add(new_feedback)
     db.session.commit()
 
-    return jsonify({"message": "Feedback received. Thank you!"}), 200
+    return jsonify({"message": "소중한 피드백 감사합니다!"}), 200
 
 @app.route('/', methods=['GET'])
 def index():
